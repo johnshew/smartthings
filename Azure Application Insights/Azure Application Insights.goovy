@@ -3,7 +3,6 @@
  *
  *  Copyright 2021 John Shewchuk
  *
- *
  */
 definition(
     name: "Application Insights",
@@ -18,7 +17,11 @@ definition(
 
 preferences {
 
-	section("Log devices...") {
+	section ("Azure Monitor Application Insights") {
+		input "aiConfig", "text", title: "Instrumentation or Connection String"
+	}
+    
+	section("Devices to log to Azure Application Insights") {
 		input "temperatures", "capability.temperatureMeasurement", title: "Temperatures", required:false, multiple: true
 		input "humidities", "capability.relativeHumidityMeasurement", title: "Humidities", required: false, multiple: true
 		input "contacts", "capability.contactSensor", title: "Doors open/close", required: false, multiple: true
@@ -31,10 +34,10 @@ preferences {
 		input "powers", "capability.powerMeter", title: "Power Meters", required:false, multiple: true
 		input "energies", "capability.energyMeter", title: "Energy Meters", required:false, multiple: true
 	}
-
-	section ("Application Insights Key...") {
-		input "apiKey", "text", title: "API key"
-	}
+    
+    section ("Developer") {
+    	input "developerMode", "bool", title: "Turn on logging"
+    }
 }
 
 def installed() {
@@ -58,6 +61,7 @@ def initialize() {
 	subscribe(batteries, "battery", handleBatteryEvent)
 	subscribe(powers, "power", handlePowerEvent)
 	subscribe(energies, "energy", handleEnergyEvent)
+    
 }
 
 def handleTemperatureEvent(evt) {
@@ -107,31 +111,30 @@ def handleEnergyEvent(evt) {
 }
 
 private sendValue(evt, Closure convert) {
+	def aiConfig = settings.aiConfig;
+    //!ToDo: check for InstrumentationKey in string // if aiConfig.has("InstrumentationKey")...
     def eventName = evt.name
-    def eventId = evt.name + '.' + evt.deviceId
-	def deviceName = evt.displayName.trim() // URLEncoder.encode(evt.displayName.trim())
+    def operationId = evt.deviceId
+	def deviceName = evt.displayName.trim()
 	def value = convert(evt.value)
     def eventDate = evt.isoDate // evt.date.format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     
-	log.debug "Logging to Azure Application Insights ${deviceName} ${eventName} = ${value} at ${eventDate}"
-
-	// def header = ["X-Forwarded-For": evt.deviceId]
+	log.debug "Logging to Azure Application Insights ${deviceName} ${eventName} = ${value} at ${eventDate} via ${aiConfig}"
 
     def params = [
-        uri: "https://eastus-3.in.applicationinsights.azure.com/v2/track",
-        // header: header,
+    	uri: "https://dc.services.visualstudio.com/v2/track",
+        // uri: "https://eastus-3.in.applicationinsights.azure.com/v2/track",
         body: [
             time: eventDate, 
-            iKey: "xyzzy",
-            name:"Microsoft.ApplicationInsights.1e93b0597ed44bc180c0fcdd882ef55a.Event", 
-            // was name:"Microsoft.ApplicationInsights.0015cbd2f5764876b5ca205f6b5e3908.Event",
+            iKey: aiConfig,
+            name:"Microsoft.ApplicationInsights." + aiConfig + ".Event", 
             tags:[ 
                 "ai.session.id": location.id,
-            	"ai.device.id": location.name + '.' + deviceName,
+            	"ai.device.id": evt.deviceId, // location.name + '.' + deviceName,
             	"ai.device.type":"Smartthing",
                 "ai.internal.sdkVersion":"Smartthings.0.1",
                 "ai.user.id": location.id,
-                "ai.operation.id": eventId,
+                "ai.operation.id": operationId,
                 "ai.operation.name": eventName
                 ],
             data: [

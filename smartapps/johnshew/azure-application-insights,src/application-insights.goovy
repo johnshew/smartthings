@@ -4,6 +4,7 @@
  *  Copyright 2021 John Shewchuk
  *
  */
+ 
 definition(
     name: "Application Insights",
     namespace: "JohnShew",

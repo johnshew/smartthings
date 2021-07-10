@@ -1,6 +1,6 @@
 /**
- *  Device Monitor
- *
+ *  Device Monitor 
+ *  
  *  Copyright 2016 Eric Maycock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -14,6 +14,7 @@
  *
  *  Contributors
  *  ----------------
+ *  Based off of Eric Maycock's solution
  *  Based off of code from J.Constantelos (https://github.com/constjs)
  *  Some code modifications provided by "Craig.K.Lyons" (https://github.com/lyons189)
  *

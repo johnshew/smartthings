@@ -50,6 +50,7 @@ def updated() {
 }
 
 def initialize() {
+	state.aiIK = config.
 	subscribe(temperatures, "temperature", handleTemperatureEvent)
 	subscribe(waterSensors, "water", handleWaterEvent)
 	subscribe(humidities, "humidity", handleHumidityEvent)
